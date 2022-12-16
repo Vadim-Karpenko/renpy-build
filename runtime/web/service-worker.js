@@ -1,13 +1,13 @@
 var cacheName = 'renpy-web-game';
 var filesToCache = [
-    '/',
-    '/index.html',
-    '/game.zip',
-    '/renpy-pre.js',
-    '/renpy.js',
-    '/renpy.data',
-    '/renpy.wasm',
-    '/web-presplash.jpg'
+  '/',
+  '/index.html',
+  '/game.zip',
+  '/renpy-pre.js',
+  '/renpy.js',
+  '/renpy.data',
+  '/renpy.wasm',
+  '/web-presplash.jpg'
 ];
 
 install = async () => {
@@ -22,19 +22,19 @@ install = async () => {
     // Get the response as json or set it as empty
     var cached_pwa_catalog = null;
     if (cached_pwa_response === undefined) {
-      cached_pwa_catalog = {"core": {}};
+      cached_pwa_catalog = { "core": {} };
     } else {
       // Set response to cached_pwa_catalog
       var cached_pwa_catalog = await cached_pwa_response.json();
     }
-    
+
     for (var i = 0; i < filesToCache.length; i++) {
       var url = filesToCache[i];
       var cached_response = await caches.match(url);
       var stripped_url = url.replace("/", "")
       if (stripped_url == "") {
         // If url is root, set it to index.html
-        stripped_url = "index.html"
+        stripped_url = "index.html";
       }
       if (cached_response) {
         // Make sure the file is present in pwa_catalog.json
@@ -42,12 +42,15 @@ install = async () => {
           // Check if md5 hash has changed
           if (cached_pwa_catalog["core"][stripped_url] !== pwa_catalog["core"][stripped_url]) {
             console.log('Deleting ' + url + ' from current cache and retrieving it from the server');
-            await cache.delete(url)
+            await cache.delete(url);
             await cache.add(url);
           } else {
-            // Put existing response into the cache
-            await cache.put(url, cached_response);
+            // Existing response is already in cache, nothing need to do
           }
+        } else {
+          // A file no longer needed, delete it from cache
+          console.log('Deleting ' + url + ' since no longer needed');
+          await cache.delete(url);
         }
       } else {
         // Cache not found, make a call to the server
@@ -60,7 +63,7 @@ install = async () => {
 }
 
 /* Start the service worker and cache all of the app's content or use the existing one */
-self.addEventListener('install', function(e) {
+self.addEventListener('install', function (e) {
   e.waitUntil(
     install()
   );
@@ -69,19 +72,19 @@ self.addEventListener('install', function(e) {
 
 
 /* Serve cached content when offline */
-self.addEventListener('fetch', function(e) {
+self.addEventListener('fetch', function (e) {
   e.respondWith(
-    caches.match(e.request).then(function(response) {
+    caches.match(e.request).then(function (response) {
       return response || fetch(e.request);
     })
   );
 });
 
 /* Delete old caches */
-self.addEventListener('activate', function(e) {
+self.addEventListener('activate', function (e) {
   e.waitUntil(
-    caches.keys().then(function(keyList) {
-      return Promise.all(keyList.map(function(key) {
+    caches.keys().then(function (keyList) {
+      return Promise.all(keyList.map(function (key) {
         if (key !== cacheName) {
           return caches.delete(key);
         }
